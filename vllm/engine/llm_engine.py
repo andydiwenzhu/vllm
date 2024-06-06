@@ -308,16 +308,16 @@ class LLMEngine:
         The workers will determine the number of blocks in both the GPU cache
         and the swap CPU cache.
         """
-        num_gpu_blocks, num_cpu_blocks = (
-            self.model_executor.determine_num_available_blocks())
-
         if self.cache_config.num_gpu_blocks_override is not None:
             num_gpu_blocks_override = self.cache_config.num_gpu_blocks_override
             logger.info(
-                "Overriding num_gpu_blocks=%d with "
-                "num_gpu_blocks_override=%d", num_gpu_blocks,
+                "Overriding num_gpu_blocks=%d and num_cpu_blocks=0",
                 num_gpu_blocks_override)
             num_gpu_blocks = num_gpu_blocks_override
+            num_cpu_blocks = 0
+        else:
+            num_gpu_blocks, num_cpu_blocks = (
+                self.model_executor.determine_num_available_blocks())
 
         self.cache_config.num_gpu_blocks = num_gpu_blocks
         self.cache_config.num_cpu_blocks = num_cpu_blocks
