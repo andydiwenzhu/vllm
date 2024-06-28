@@ -184,15 +184,22 @@ class Worker(WorkerBase):
 
         This also warms up the model, which may record CUDA graphs.
         """
+        import time
+        t1 = time.time()
         raise_if_cache_size_invalid(num_gpu_blocks,
                                     self.cache_config.block_size,
                                     self.model_config.max_model_len)
 
         self.cache_config.num_gpu_blocks = num_gpu_blocks
         self.cache_config.num_cpu_blocks = num_cpu_blocks
-
+        t2 = time.time()
+        print("time 1:", t2 - t1)
         self._init_cache_engine()
+        t3 = time.time()
+        print("time 2:", t3 - t2)
         self._warm_up_model()
+        t4 = time.time()
+        print("time 3:", t4 - t3)
 
     def _init_cache_engine(self):
         assert self.cache_config.num_gpu_blocks is not None
