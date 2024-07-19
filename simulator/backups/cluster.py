@@ -83,7 +83,6 @@ class ApiServer:
     def on_request(self, request):
         self.mq.push(request)
 
-
 class Scheduler:
     def __init__(self, id):
         self.id = id
