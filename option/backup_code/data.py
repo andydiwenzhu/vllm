@@ -22,5 +22,5 @@ def get_month(month="2406"):
 
 
 if __name__ == '__main__':
-    get_month("2407")
+    get_month("2408")
     api.close()
