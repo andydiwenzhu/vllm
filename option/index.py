@@ -158,15 +158,15 @@ class Vola:
         x.index = pd.to_datetime(x.index)
         bi = x['volas'].nsmallest(1, keep='all').index
         si = x['volas'].nlargest(1, keep='all').index
-        self.candle(x, f'hs300-{start_date}~{end_date}', bi, si, volume=True, folder='figs_daily')
+        self.candle(x, f'{self.symbol}-{start_date}~{end_date}', bi, si, volume=True, folder='figs_daily')
 
 
 if __name__ == '__main__':
-    date = sys.argv[1] if len(sys.argv) > 1 else pd.Timestamp.today().strftime('%Y-%m-%d')
-    u = Updater()
-    u.fetch_update(date)
-    u.merge()
-    v = Vola()
-    v.vola(date)
-    #v.vola_daily('2024-01-01', date)
+    # date = sys.argv[1] if len(sys.argv) > 1 else pd.Timestamp.today().strftime('%Y-%m-%d')
+    # u = Updater()
+    # u.fetch_update(date)
+    # u.merge()
+    v = Vola(symbol='zz1000', data_path='data/zz1000_1m.csv')
+    #v.vola(date)
+    v.vola_daily('2024-01-01', '2024-07-26')
         

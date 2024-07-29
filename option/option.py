@@ -35,13 +35,13 @@ class Strategy:
     def __init__(self, prefix='IO24'):
         self.prefix = prefix
 
-    def find_main(self):
+    def find_main(self, lower=30, upper=100, oi=2000):
         dfs = []
         for f in os.listdir("tq_data"):
             if f.startswith(self.prefix):
                 df = pd.read_csv(f"tq_data/{f}")
                 df['datetime'] = pd.to_datetime(df['datetime'])
-                x = df[(df['datetime'].dt.hour==9)&(df['datetime'].dt.minute==30)&(df['open'] >= 30)&(df['open'] <= 100)].copy()
+                x = df[(df['datetime'].dt.hour==9)&(df['datetime'].dt.minute==30)&(df['open'] >= lower)&(df['open'] <= upper)].copy()
                 x['date'] = x['datetime'].dt.date
                 x = x[['date', 'open_oi', 'symbol', 'open']]
                 x['dir'] = f[7]
@@ -53,10 +53,12 @@ class Strategy:
         x = x.reset_index().sort_values('date')
         x = x.drop(columns=['index'])
         # x groupby date then sum open_oi, if > 6000, then such date is valid, now we need to filter x by valid dates
-        y = x.groupby('date')['open_oi'].sum()
-        y = y[y>6000]
+        y = x.groupby('date')['open_oi'].min()
+        y = y[y>oi]
+        old_len = len(x)
         x = x[x['date'].isin(y.index)]
         assert (x.groupby('date').size()==2).all(), x.groupby('date').size()!=2
+        print(f'valid: {(len(x)/old_len):0.2%}')
         x.to_csv(f'data/main_{self.prefix}.csv', index=False)
         return x
 
@@ -102,20 +104,24 @@ class Strategy:
             self.candle(df, f'{date}_{symbol}_fix_{fix_loss:0.4f}_{fix_profit:0.4f}', bp, sp)
         return r
 
-    def test_fix_pnl(self, start_date='2024-07-01', end_date='2024-07-26'):
+    def test_fix_pnl(self, start_date='2024-07-01', end_date='2024-07-26', fix_loss=0.1, fix_profit=0.2, plot=True):
         df = pd.read_csv(f'data/main_{self.prefix}.csv')
         df = df[(df['date'] >= start_date)&(df['date'] <= end_date)]
         records = []
         for i, r in df.iterrows():
-            pnl = self.sd_fix_pnl(r['date'], r['symbol'], plot=True)
+            pnl = self.sd_fix_pnl(r['date'], r['symbol'], fix_loss=fix_loss, fix_profit=fix_profit, plot=plot)
             records.append({'date': r['date'], 'pnl': pnl})
         x = pd.DataFrame(records)
         good = x.groupby('date')['pnl'].max()
         bad = x.groupby('date')['pnl'].min()
-        print(bad.mean(), x['pnl'].mean(), good.mean())
+        print(fix_profit, bad.mean(), x['pnl'].mean(), good.mean())
 
 
 if __name__ == '__main__':
-    #u = Updater()
-    m = Strategy()
-    m.test_fix_pnl('2024-07-01', '2024-07-25')
+    # u = Updater(contract_path='data/mo_contract.csv')
+    # for i in range(1, 8):
+    #     u.get_month(f'240{i}')
+    m = Strategy(prefix='MO24')
+    #m.find_main()
+    for p in [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
+        m.test_fix_pnl('2024-07-01', '2024-07-26', fix_profit=p, plot=False)
